@@ -1,0 +1,15 @@
+[Unit]
+Description=Vpn rest server
+After=network.target
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/root/vpn_server/vpn_server_rest_api/
+Environment="PATH=/root/vpn_server/vpn_server_rest_api/venv/bin:/usr/bin/"
+ExecStart=/root/vpn_server/vpn_server_rest_api/venv/bin/gunicorn \
+    --workers 3 --bind 0.0.0.0:5000 \
+     --chdir /root/vpn_server/vpn_server_rest_api/  -m 007 wsgi:app
+
+[Install]
+WantedBy=multi-user.target

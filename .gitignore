@@ -1,0 +1,10 @@
+
+**/__pycache__/
+**/node_modules/
+**/.idea/
+frontend/dist/
+**/logs/
+.env
+**/staticfiles/
+**/mediafiles/
+*.log

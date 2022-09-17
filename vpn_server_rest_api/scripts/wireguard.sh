@@ -74,14 +74,21 @@ function checkClient() {
 
 function does_dot_exist() {
   echo "Check Dot existance"
+  echo "WG: ${WIREGUARD_IPv4}"
+  # echo "WG::-1  ${WIREGUARD_IPv4::-1}"
   for DOT_IP in {2..254}; do
-    DOT_EXISTS=$(grep -c "${WIREGUARD_IPv4::-1}${DOT_IP}" "${WIREGUARD_CLIENT_CONFIG_PATH}")
-    if [[ $DOT_EXISTS -gt 0 ]]; then
-      return_error "The subnet configured supports only 253 clients."
-    else
-      break
-    fi
+    echo "Check DOT: ${WIREGUARD_IPv4}.${DOT_IP}"
+    DOT_EXISTS=$(grep -c "${WIREGUARD_IPv4}.${DOT_IP}" "${WIREGUARD_CLIENT_CONFIG_PATH}")
+    if [[ ${DOT_EXISTS} == '0' ]]; then
+			break
+		fi
   done
+
+  if [[ ${DOT_EXISTS} == '1' ]]; then
+		echo ""
+		echo "The subnet configured supports only 253 clients."
+		exit 1
+	fi
 }
 
 function does_ipv4_exit() {
@@ -185,15 +192,15 @@ function newClient() {
   CLIENT_PRE_SHARED_KEY=$(wg genpsk)
 
     echo "[Interface]
-  PrivateKey = ${CLIENT_PRIV_KEY}
-  Address = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128
-  DNS = ${CLIENT_DNS_1},${CLIENT_DNS_2}
+PrivateKey = ${CLIENT_PRIV_KEY}
+Address = ${CLIENT_WG_IPV4}/32,${CLIENT_WG_IPV6}/128
+DNS = ${CLIENT_DNS_1},${CLIENT_DNS_2}
 
-  [Peer]
-  PublicKey = ${SERVER_PUB_KEY}
-  PresharedKey = ${CLIENT_PRE_SHARED_KEY}
-  Endpoint = ${ENDPOINT}
-  AllowedIPs = 0.0.0.0/0,::/0" >>"${CLIENT_CONFIG_HOME}"
+[Peer]
+PublicKey = ${SERVER_PUB_KEY}
+PresharedKey = ${CLIENT_PRE_SHARED_KEY}
+Endpoint = ${ENDPOINT}
+AllowedIPs = 0.0.0.0/0,::/0" >>"${CLIENT_CONFIG_HOME}"
 
     # Add the client as a peer to the server
     echo -e "\n### Client ${CLIENT_NAME}

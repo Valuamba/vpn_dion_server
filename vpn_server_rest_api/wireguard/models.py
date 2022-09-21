@@ -1,4 +1,7 @@
 import enum
+from typing import Optional, List
+
+from pydantic import BaseModel
 
 
 class Options(enum.IntEnum):
@@ -26,3 +29,16 @@ class ClientConfigDto:
         self.preshared_key = kwargs['preshared_key']
         self.endpoint = kwargs['endpoint']
         self.allowed_ips = kwargs['allowed_ips']
+
+
+class WgInfo(BaseModel):
+    peer: Optional[str]
+    preshared_key: Optional[str]
+    endpoint: Optional[str]
+    allowed_ips: Optional[str]
+    latest_handshake: Optional[str]
+    transfer: Optional[str]
+
+
+class WgInfoList(BaseModel):
+    __root__: List[WgInfo]

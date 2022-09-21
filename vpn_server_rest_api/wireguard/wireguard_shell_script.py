@@ -1,16 +1,22 @@
 import configparser
+import json
 import os
 
 # from config import Config
 import pprint
 import re
 import subprocess
-
+import subprocess
+import re
 from config import Config
 from response_model import ResponseModel
 from flask import current_app as app
 
 from wireguard.models import ClientConfigDto
+
+from wireguard.utils import create_wg_info
+
+from wireguard.models import WgInfoList
 
 
 class WireguardCommand:
@@ -166,3 +172,34 @@ def parse_wireguard_config(config_path: str) -> ClientConfigDto:
         endpoint=config['Peer']['Endpoint'],
         allowed_ips=config['Peer']['AllowedIPs']
     )
+
+
+def collect_wg_infos():
+    p = subprocess.Popen('wg show', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out, err = p.communicate()
+    out = out.decode('utf-8')
+    err = err.decode('utf-8')
+    try:
+        if p.returncode >= 1:
+            return ResponseModel(is_successful=False, message=f"Command line exception: {out}\n{err}")
+
+        r = re.compile('(?P<key>([a-z]+(\s?))*):\s*(?:"([^"]*)"|(?P<value>.*))')
+        matches = [m.groupdict() for m in r.finditer(out)]
+
+        key_value_indexes = [idx for idx, match in enumerate(matches) if match['key'] == 'peer']
+
+        key_value_pair_list = []
+        for idx, key_index in enumerate(key_value_indexes):
+            if idx == len(key_value_indexes) - 1:
+                key_value_pair_list.append(create_wg_info(matches[key_index:]))
+            else:
+                key_value_pair_list.append(create_wg_info(matches[key_index: key_value_indexes[idx + 1]]))
+
+        # return key_value_pair_list
+
+        wgInfoList = WgInfoList(__root__=key_value_pair_list)
+
+        # return wgInfoList
+        return ResponseModel(is_successful=True, data=wgInfoList.json())
+    except Exception as e:
+        return ResponseModel(is_successful=True, message=f"Exception: {str(e)}")

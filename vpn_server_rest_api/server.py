@@ -1,7 +1,7 @@
 from config import Config
 from statistics.collect_statistics import get_ram, get_network_statistics, get_cpu
 from statistics.models import ServerStatistic
-from wireguard.wireguard_shell_script import add_client_wireguard, remove_wireguard, health_check
+from wireguard.wireguard_shell_script import add_client_wireguard, remove_wireguard, health_check, collect_wg_infos
 from logging.config import dictConfig
 from flask import Flask, send_file
 from getmac import get_mac_address as gma
@@ -24,6 +24,17 @@ dictConfig({
 
 
 app = Flask(__name__)
+
+
+@app.route("/wg-connections")
+def get_wg_connections():
+    app.logger.info(f'Collect wg connections')
+    response = collect_wg_infos()
+    # it = iter(response)
+    # res_dct = dict(zip(it, it))
+    # return res_dct
+    return response.__dict__
+    # return response.__dict__
 
 
 @app.route("/device-configuration")
